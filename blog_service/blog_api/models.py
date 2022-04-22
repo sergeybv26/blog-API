@@ -1,4 +1,7 @@
 from django.db import models
+from django.db.models import Q
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 
 class BlogPost(models.Model):
@@ -7,12 +10,34 @@ class BlogPost(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлено')
 
+    def get_first_comment(self):
+        """Получение коментариев до третьего уровня вложенности"""
+        return self.comments.select_related().filter(level__lte=3).order_by('level')\
+            .values('id', 'text', 'user', 'parent', 'level')
+
+    # def get_last_comment(self):
+    #     """Получение комментариев от третьего уровня вложенности и больше"""
+    #     return self.comments.select_related().filter(level__gt=3).order_by('parent')
+
 
 class Comments(models.Model):
     post_id = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name='comments')
     text = models.CharField(max_length=450, verbose_name='Текст комментария')
     user = models.CharField(max_length=150, verbose_name='Имя пользователя')
     parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.CASCADE, verbose_name='Родитель')
+    level = models.IntegerField(default=1, verbose_name='уровень вложенности комментария')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлено')
 
+    def get_last_comment(self):
+        """Получение комментариев от третьего уровня вложенности и больше"""
+        return Comments.objects.filter(parent=self).order_by('parent').values('id', 'text', 'user', 'parent', 'level')
+
+
+@receiver(pre_save, sender=Comments)
+def comment_level_update(sender, instance, **kwargs):
+    if instance.parent:
+        if instance.parent.parent == instance.parent:
+            instance.level = instance.parent.level
+        else:
+            instance.level = instance.parent.level + 1
