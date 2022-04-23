@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 .idea
+/blog_service/.env.db

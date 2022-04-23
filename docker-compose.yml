@@ -1,0 +1,29 @@
+version: '3.8'
+services:
+
+  web:
+    build:
+      context: ./blog_service
+      dockerfile: Dockerfile
+    command: gunicorn blog_service.wsgi:application --bind 0.0.0.0:8000
+    expose:
+      - 8000
+    env_file:
+      - ./blog_service/.env
+    depends_on:
+      - db
+  db:
+    image: postgres:13-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - ./blog_service/.env.db
+  nginx:
+    build: ./nginx
+    ports:
+      - 1337:80
+    dependes_on:
+      - web
+
+  volumes:
+    postgres_data:

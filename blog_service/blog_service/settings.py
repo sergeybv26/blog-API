@@ -92,8 +92,11 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'blog_api',
-            'USER': 'postgres',
+            'NAME': os.getenv('SQL_DATABASE'),
+            'USER': os.getenv('USER'),
+            'PASSWORD': os.getenv('PASSWORD'),
+            'HOST': os.getenv('HOST'),
+            'PORT': os.getenv('PORT'),
         }
     }
 
