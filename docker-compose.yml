@@ -22,7 +22,7 @@ services:
     build: ./nginx
     ports:
       - 1337:80
-    dependes_on:
+    depends_on:
       - web
 
   volumes:
